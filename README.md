@@ -63,8 +63,31 @@ Device added successfully.
 ```
 
 ### netbox-to-device.py
+Pushes a config file to a live device. It will use the netbox hostname by default, override with -i. By default it uses a url to something that spits out plain text. use -c for a local config file.
 
-
+Arguments
+```
+Argument     Required  Default   Notes
+-d / --device	 yes	none	 Netbox device ID to work on. Find the device in Netbox and the ID is in the url.
+-i / --ip	 no	none	 IP address or Hostname of the device to talk to. Without this, it will use the device's primary IP on the netbox record.
+-c / --config    no              Configuration file to push to device
+-r / --replace   no              Use napalm REPALCE instead of MERGE. Test more!
+-h / --h	 no   	         Help
+```
+Example
+```
+/opt/scripts/netbox-to-device.py -d 357
+ 
+Password for user "falz" to log in to device and netbox:
+Fetching https://netbox.example.org/cgi-bin/netbox_router_config.cgi?device=357
+ 
++interface GigabitEthernet0/0/0
++shutdown
+ 
+ 
+Apply changes to 140.189.68.16? [y/N] y
+Applying changes..
+```
 ### netbox-device-type-change.py
 Changes a netbox device from one model to another. We used this do 'upgrade' devices in the field and stage their new config. Requires extensive interface mapping in config.py in the `types` dictionary. 
 
