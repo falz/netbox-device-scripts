@@ -6,7 +6,7 @@ Scripts to import devices in to netbox, as well as changing device types while m
 * **device-to-netbox.py** : Import a productoin device using NAPALM driver
 * **netbox-to-device.py** : Push a config from netbox to a device. Requires something to create this config (not in this repo)
 * **netbox-device-type-change.py** : Converts device types, 
-* **config.py** : configuration file for API key, device type mapping, etc.
+* **config.py** : configuration file for API key, device type mapping, etc. Has a common section and a per-script section. 
 
 ## Requirements
 A working Netbox install v3.1+, Python 3.6+ and these modules:
@@ -16,16 +16,19 @@ pip install argparse json getpass napalm pynetbox
 ```
 
 ## Usage
+Imports a device from production in to netbox. A netbox device type for the model must exist. It will import as much as it can (interfaces, IPs) and assign the site/tenant to all created objects, set the device serial and set it as Active. It will ignore certain interfaces that match patterns in **config.py**. 
+
+
 ### device-to-netbox.py
 **Arguments**
 ```
 Argument        Required  Default   Notes
 -d / --device	yes	none	hostname of device to get config from
 -m / --model	yes	none	netbox device type (model) to import in to
--s / --site	yes	none	netbox site name (AbbotsfordSD). Gets location from here?
--t / --tenant	yes	none	netbox tenant name (AbbotsfordSD). Not to be confused with site, although many will be the same.
--o / os	        no	ios	OS of device. Uses NAPALM driver names
--r / role 	no	cpe	Netbox device role
+-s / --site	yes	none	netbox site name 
+-t / --tenant	yes	none	netbox tenant name
+-o / --os	no	ios	OS of device. Uses NAPALM driver names
+-r / --role 	no	cpe	Netbox device role
 -p / --password	no	        send password from cli. ask for one if flag not given.
 -u / --username	no	        shell username	Username that logs in to router. Default to shell session's username
 ```
@@ -82,7 +85,7 @@ Argument     Required  Default   Notes
 
 **Example**
 ```diff
-/opt/scripts/netbox-to-device.py -d 357
+./netbox-to-device.py -d 357
  
 Password for user "falz" to log in to device and netbox:
 Fetching https://netbox.example.org/cgi-bin/netbox_router_config.cgi?device=357
