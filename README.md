@@ -66,4 +66,43 @@ Device added successfully.
 
 
 ### netbox-device-type-change.py
+Changes a netbox device from one model to another. We used this do 'upgrade' devices in the field and stage their new config. Requires extensive interface mapping in config.py in the `types` dictionary. 
 
+This will also clear the device serial number and adjust status to Planned, and add any missing interfaces that are in the target device type.
+
+This was very specific to our scenario and one has to map loopback, wan1/2, lan1/2 interfaces, which are all pretty layer3 heavy. YMMV.
+
+Currently supports ME-3400EG-2CS-A, ASR-920-4SZ-A, ASR-920-12CZ-A. 
+
+Arguments
+```
+-d : numeric netbox device to convert (integer)
+-t : type to convert to. Requires this device type to exist (string)
+```
+
+Exmaple conversion
+```
+./netbox-device-type-change.py -t ASR-920-4SZ-A -d 372
+ 
+Fetching netbox device 372 ..
+Working on hostname (https://netbox.wiscnet.net/dcim/devices/372) Type: ASR-920-4SZ-A
+ 
+Mapping interfaces..
+Role: wan2 Old Name: GigabitEthernet0/1 -> New Name: TenGigabitEthernet0/0/5 New Type: 10gbase-x-sfpp Status: OK
+Role: wan1 Old Name: GigabitEthernet0/2 -> New Name: TenGigabitEthernet0/0/3 New Type: 10gbase-x-sfpp Status: OK
+Role: lan1 Old Name: GigabitEthernet0/3 -> New Name: TenGigabitEthernet0/0/2 New Type: 10gbase-x-sfpp Status: OK
+Role: lan2 Old Name: GigabitEthernet0/4 -> New Name: TenGigabitEthernet0/0/4 New Type: 10gbase-x-sfpp Status: OK
+Role: mgmt Old Name: FastEthernet0 -> New Name: GigabitEthernet0 New Type: 1000base-t Status: OK
+Role: loop Old Name: Loopback0 -> New Name: Loopback0 New Type: virtual Status: OK
+Done
+ 
+Changing Serial Number from 'FOC1234ABCD' to ''
+Changing Status from Active to Planned
+Changing Type from ME-3400EG-2CS-A to ASR-920-4SZ-A
+Done
+ 
+Creating missing interfaces:
+GigabitEthernet0/0/0 1000base-t
+GigabitEthernet0/0/1 1000base-t
+Done
+```
