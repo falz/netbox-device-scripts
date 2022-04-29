@@ -9,7 +9,8 @@ Scripts to import devices in to netbox, as well as changing device types while m
 * **config.py** : configuration file for API key, device type mapping, etc.
 
 ## Requirements
-Python 3.6+ and these modules:
+A working Netbox install v3.1+, Python 3.6+ and these modules:
+
 ```
 pip install argparse json getpass napalm pynetbox
 ```
