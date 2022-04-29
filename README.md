@@ -15,6 +15,7 @@ pip install argparse json getpass napalm pynetbox
 
 ## Usage
 ### device-to-netbox.py
+**Arguments**
 ```
 Argument        Required  Default   Notes
 -d / --device	yes	none	hostname of device to get config from
@@ -27,7 +28,7 @@ Argument        Required  Default   Notes
 -u / --username	no	        shell username	Username that logs in to router. Default to shell session's username
 ```
 
-Example import
+**Example**
 ```
 ./device-to-netbox.py -d hostname -s sitename -t tenantname -m ME-3400EG-2CS-A -o ios -r cpe
  
@@ -63,9 +64,11 @@ Device added successfully.
 ```
 
 ### netbox-to-device.py
-Pushes a config file to a live device. It will use the netbox hostname by default, override with -i. By default it uses a url to something that spits out plain text. use -c for a local config file.
+Pushes a config file to a live device. It will use the netbox hostname by default, override with **-i**. By default it uses a url to something that spits out plain text. use **-c** for a local config file.
 
-Arguments
+Example shows `netbox_router_config.cgi` which is too customized (and ugly) to publish, sorry. Change the config to point to a url that spits out your own config file
+
+**Arguments**
 ```
 Argument     Required  Default   Notes
 -d / --device	 yes	none	 Netbox device ID to work on. Find the device in Netbox and the ID is in the url.
@@ -74,8 +77,9 @@ Argument     Required  Default   Notes
 -r / --replace   no              Use napalm REPALCE instead of MERGE. Test more!
 -h / --h	 no   	         Help
 ```
-Example
-```
+
+**Example**
+```diff
 /opt/scripts/netbox-to-device.py -d 357
  
 Password for user "falz" to log in to device and netbox:
@@ -88,6 +92,7 @@ Fetching https://netbox.example.org/cgi-bin/netbox_router_config.cgi?device=357
 Apply changes to 140.189.68.16? [y/N] y
 Applying changes..
 ```
+
 ### netbox-device-type-change.py
 Changes a netbox device from one model to another. We used this do 'upgrade' devices in the field and stage their new config. Requires extensive interface mapping in config.py in the `types` dictionary. 
 
@@ -97,13 +102,13 @@ This was very specific to our scenario and one has to map loopback, wan1/2, lan1
 
 Currently supports ME-3400EG-2CS-A, ASR-920-4SZ-A, ASR-920-12CZ-A. 
 
-Arguments
+**Arguments**
 ```
 -d : numeric netbox device to convert (integer)
 -t : type to convert to. Requires this device type to exist (string)
 ```
 
-Exmaple conversion
+**Exmaple**
 ```
 ./netbox-device-type-change.py -t ASR-920-4SZ-A -d 372
  
