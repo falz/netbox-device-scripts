@@ -22,12 +22,11 @@
 #	2021-01-27	move config to config.py
 #	2021-04-20	update from netbox 2.8 to 2.11. adjust up_dict to not use 'interface' and instead use 'assigned_object_*'
 #	2022-04-29	published on github at https://github.com/falz/netbox-device-scripts/
+#	2022-04-29	remove slugs which are deprecated, this also fixes case sensitivity issues
 #
 # issues / todo:
 #
 #	needs more error handling. a lot of the 'try:' statements fail silently. should be enough normal output to know what area failed (ie adding facts: bgp..)
-#	searches for sites and tenants are based on lowercased slugs for those items. if your slugs have uppercase characters, currently will not work. tbd if we want to make this script more flexible or not.
-#
 #
 
 import argparse
@@ -89,11 +88,11 @@ def check_netbox_sanity(args, nb):
 	# sanity checks, return results from checks for use later
 	sanitydata = {}
 
-	device = 	args['device']
+	device = 	args['device'].lower()
 	site =		args['site'].lower()
 
 	try:
-		existingdevices = nb.dcim.devices.get(name=device, site=site)
+		existingdevices = nb.dcim.devices.get(name__ie=device, site__ie=site)
 	except pynetbox.lib.query.RequestError as e:
 		print(e.error)
 
@@ -102,9 +101,9 @@ def check_netbox_sanity(args, nb):
 		return(False, message, sanitydata)
 
 
-	model = args['model']
+	model = args['model'].lower()
 	try:
-		models = nb.dcim.device_types.get(model=model)
+		models = nb.dcim.device_types.get(model__ie=model)
 	except pynetbox.lib.query.RequestError as e:
 		print(e.error)
 
@@ -115,8 +114,7 @@ def check_netbox_sanity(args, nb):
 		sanitydata['model'] = models
 
 
-	site = args['site']
-	sites = nb.dcim.sites.get(slug=site.lower())
+	sites = nb.dcim.sites.get(name__ie=site)
 	if sites is None:
 		message = "Site " + site + " doesn't exist!"
 		return(False, message, sanitydata)
@@ -124,9 +122,9 @@ def check_netbox_sanity(args, nb):
 		sanitydata['site'] = sites
 
 
-	tenant = args['tenant']
+	tenant = args['tenant'].lower()
 	try:
-		tenants = nb.tenancy.tenants.get(slug=tenant.lower())
+		tenants = nb.tenancy.tenants.get(name__ie=tenant)
 	except pynetbox.lib.query.RequestError as e:
 		print(e.error)
 
@@ -145,14 +143,16 @@ def check_netbox_sanity(args, nb):
 def get_device_info(args):
 	# todo - add more error handling (check if napalm installed, if the driver passed is legit
 
+	device = args['device'].lower()
+
 	print("")
-	print("Connecting to " + args['device'] + ":", end='')
+	print("Connecting to " + device + ":", end='')
 	try:
 		driver = napalm.get_network_driver(args['os'])
-		napalmdevice = driver(args['device'], args['username'], args['password'])
+		napalmdevice = driver(device, args['username'], args['password'])
 		napalmdevice.open()
 	except:
-		print(" ERROR: Can't connect to", args['device'], "for some reason! Check hostname, password, OS")
+		print(" ERROR: Can't connect to", device, "for some reason! Check hostname, password, OS")
 		return(False)
 	print(" Done")
 
@@ -199,6 +199,7 @@ def get_device_info(args):
 	except:
 		return(False, device_dict)
 
+		
 	try:
 		print(" IPs", end='')
 		ips = napalmdevice.get_interfaces_ip()
@@ -224,8 +225,8 @@ def create_netbox_device(config, nb, args, device_dict, sanitydata):
 	print("")
 	print("Creating netbox device: ", end='')
 	try:
-		role = nb.dcim.device_roles.get(slug=args['role'])
-		platform = nb.dcim.platforms.get(slug=args['os'])
+		role = nb.dcim.device_roles.get(name__ie=args['role'])
+		platform = nb.dcim.platforms.get(name__ie=args['os'])
 	except pynetbox.lib.query.RequestError as e:
 		print(e.error)
 
@@ -233,7 +234,7 @@ def create_netbox_device(config, nb, args, device_dict, sanitydata):
 	timestamp =	now.strftime("%Y-%m-%d %H:%M:%S")
 
 	create_dict = {}
-	create_dict =dict(
+	create_dict = dict(
 		name =		args['device'],
 		device_type =	sanitydata['model'].id,
 		device_role =	role.id,
@@ -367,6 +368,7 @@ def add_ips(config, nb, args, device_dict, device_result, sanitydata):
 	print("")
 	print("Adding IP addresses:", end='')
 	for interface_key, interface_val in device_dict['ips'].items():
+		interface_key = interface_key.lower()
 		for family_key, family_value in interface_val.items():
 			for ip_key, ip_val in family_value.items():
 				# if we concat stuff together, do it hear to keep the section below cleaner + for re-usibility
@@ -380,10 +382,9 @@ def add_ips(config, nb, args, device_dict, device_result, sanitydata):
 
 					# get interface associated with this IP
 					try:
-						netbox_interface=nb.dcim.interfaces.get(device_id=device_result.id, name=interface_key)
+						netbox_interface=nb.dcim.interfaces.get(device_id=device_result.id, name__ie=interface_key)
 					except pynetbox.lib.query.RequestError as e:
 						print(e.error)
-
 
 					ip_dict = {}
 					ip_dict = dict(
@@ -402,7 +403,6 @@ def add_ips(config, nb, args, device_dict, device_result, sanitydata):
 					if re.search(config.interface_roles['loopback'], interface_key, re.IGNORECASE):
 						interface_role = "loopback"
 						ip_dict['role'] = interface_role
-
 
 					#Check if IP already exists, if so update it. if not, add it.
 					try:
@@ -423,12 +423,10 @@ def add_ips(config, nb, args, device_dict, device_result, sanitydata):
 						except pynetbox.lib.query.RequestError as e:
 							print(e.error)
 
-
-
 					# do this after the ip is created
 					if interface_role == "loopback":
 						try:
-							device_role = nb.dcim.device_roles.get(slug=args['role'])
+							device_role = nb.dcim.device_roles.get(name__ie=args['role'])
 						except pynetbox.lib.query.RequestError as e:
 							print(e.error)
 
@@ -529,4 +527,3 @@ else:
 		print("")
 		print("Device added successfully.")
 		print("")
-
