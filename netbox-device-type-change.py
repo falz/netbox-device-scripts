@@ -14,6 +14,7 @@
 #	2021-01-27	move config to config.py
 #	2021-04-20	convert from netbox 2.8.0 to 2.11.0. Only change is device status no longer is an id, so change "2" to "planned".
 #	2022-04-29	posted to github
+#	2022-07-02	remove deprecated slugs
 #
 # todo:
 #	instead of 1:1 mapping of interfaces, should we sense its type based on circuit ID and correctly assign it?
@@ -26,7 +27,6 @@ import config as config
 
 
 ## see config.py for config
-
 
 ##########################################
 ## functions
@@ -46,6 +46,8 @@ def parse_cli_args(config):
 
 def get_device(config, args):
 	device = args['device']
+	type = args['type'].lower()
+
 	nb = pynetbox.api(config.netbox_url, config.netbox_api_token)
 	# todo add error checking
 	nb_device = nb.dcim.devices.get(device)
@@ -54,20 +56,20 @@ def get_device(config, args):
 
 	# check if this type is valid in netbox
 	try:
-		nb_device_type = nb.dcim.device_types.get(slug=args['type'].lower())
+		nb_device_type = nb.dcim.device_types.get(model__ie=type)
 		#print(nb_device_type)
 	except pynetbox.RequestError as e:
 		print(e.error)
 		sys.exit(1)
 
-	nb_device_types = nb.dcim.device_types.filter(model=args['type'])
-	argtype = args['type']
-	#cant do simble 'if a in b' because one is string and other is object
-	if str(argtype) in [str(device_type) for device_type in nb_device_types]:
-		print (argtype)
+	nb_device_types = nb.dcim.device_types.filter(model__ie=type)
+
+	#cant do simple 'if a in b' because one is string and other is object
+	if str(type) in [str(device_type).lower() for device_type in nb_device_types]:
+		print (type)
 	else:
 		print("")
-		print("INVALID:", argtype, "Aborting.")
+		print("INVALID:", type, "Aborting.")
 		sys.exit(1)
 
 	return(nb, nb_device, nb_device_types)
@@ -98,10 +100,16 @@ def fix_other(nb_device, nb_device_types, args):
 
 # map lan and wan interfaces. perhaps add missing here as well
 def map_interfaces(config, nb_device, args):
+	target_type	= args['type'].lower()
+	current_type	= str(nb_device.device_type).lower()
+
+	if current_type not in config.types:
+		print("ERROR: device type", current_type, "not defined in config.py")
+		print()
+		sys.exit(1)
+
 	print("")
 	print("Mapping interfaces..")
-	target_type	= args['type']
-	current_type	= str(nb_device.device_type)
 
 	# get interfaces from netbox device
 	current_interfaces	= nb.dcim.interfaces.filter(device_id=nb_device.id)
@@ -135,7 +143,6 @@ def map_interfaces(config, nb_device, args):
 						print(" Status: OK")
 					except pynetbox.lib.query.RequestError as e:
 						print(e.error)
-
 	print("Done")
 	return(True)
 
