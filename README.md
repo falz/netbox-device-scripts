@@ -118,7 +118,7 @@ Currently supports ME-3400EG-2CS-A, ASR-920-4SZ-A, ASR-920-12CZ-A.
 ./netbox-device-type-change.py -t ASR-920-4SZ-A -d 372
  
 Fetching netbox device 372 ..
-Working on hostname (https://netbox.wiscnet.net/dcim/devices/372) Type: ASR-920-4SZ-A
+Working on hostname (https://netbox.example.net/dcim/devices/372) Type: ASR-920-4SZ-A
  
 Mapping interfaces..
 Role: wan2 Old Name: GigabitEthernet0/1 -> New Name: TenGigabitEthernet0/0/5 New Type: 10gbase-x-sfpp Status: OK
