@@ -3,7 +3,7 @@
 Scripts to import devices in to netbox, as well as changing device types while mapping interfaces properly. Tested on Cisco IOS devices (ME3400, ASR920) as well as various Juniper MX anx QFX. Should work with any other devices that have NAPALM drivers.
 
 ## Scripts
-* **device-to-netbox.py** : Import a productoin device using NAPALM driver
+* **device-to-netbox.py** : Import a production device using NAPALM driver
 * **netbox-to-device.py** : Push a config from netbox to a device. Requires something to create this config (not in this repo)
 * **netbox-device-type-change.py** : Converts device types, 
 * **config.py** : configuration file for API key, device type mapping, etc. Has a common section and a per-script section. 
