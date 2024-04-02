@@ -113,7 +113,7 @@ Currently supports ME-3400EG-2CS-A, ASR-920-4SZ-A, ASR-920-12CZ-A.
 -t : type to convert to. Requires this device type to exist (string)
 ```
 
-**Exmaple**
+**Examaple**
 ```
 ./netbox-device-type-change.py -t ASR-920-4SZ-A -d 372
  
